@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<meta content="utf-8" http-equiv="encoding">
+</head>
+<body>
+<canvas id="game_canvas" width="800" height="600"></canvas>
+<script>
+var canvas;
+var canvas_context;
+
+window.onload = function() {
+    console.log("Hello World!");
+
+    // Get canvas size from HTML tag
+    canvas = document.getElementById('game_canvas');
+    canvas_context = canvas.getContext('2d');
+
+    draw_this();
+}
+
+function draw_this() {
+    // Set canvas color
+    canvas_context.fillStyle = 'black';
+    // Set canvas position and size (x, y, w, h)
+    canvas_context.fillRect(0, 0, canvas.width, canvas.height);
+
+    canvas_context.fillStyle = 'red'; // Set color
+    canvas_context.beginPath(); // Declares this as a new, separate object
+    canvas_context.arc(25, 25, 10, 0, Math.PI*2, true); // (x, y, radius, start_angle, end_angle, draw_anticlockwise=True)
+    canvas_context.fill(); // Color the shape with the current fillStyle
+}
+</script>
+</body>
+</html>
