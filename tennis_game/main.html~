@@ -16,16 +16,14 @@ const score_height = 50;
 var score_1p = 0, score_2p = 0;
 
 window.onload = function() {
-    console.log("Hello World!");
-
     // Get canvas size from HTML tag
     canvas = document.getElementById('game_canvas');
     canvas_context = canvas.getContext('2d');
 
     canvas.addEventListener('mousemove', function(evt) {
         var mouse_pos = get_mouse_position(evt);
-        paddle_y_2p = mouse_pos.y - (paddle_height/2);
-        //paddle_y_1p = mouse_pos.y - (paddle_height/2);
+        paddle_y_1p = mouse_pos.y - (paddle_height/2);
+        //paddle_y_2p = mouse_pos.y - (paddle_height/2);
     } );
 
     var fps = 30
@@ -85,9 +83,12 @@ function move_ball() {
     if(ball_x > canvas.width) {
         if((ball_y > paddle_y_2p) && (ball_y < paddle_y_2p + paddle_height)) {
             ball_x_spd *= -1;
+
+            var delta_y = ball_y - (paddle_y_2p + paddle_height/2);
+            ball_y_spd = delta_y * 0.35;
         }
         else {
-            score_1p += 1;
+            score_1p++;
             reset_ball();
         }
     }
@@ -95,9 +96,12 @@ function move_ball() {
     if(ball_x < 0) {
         if((ball_y > paddle_y_1p) && (ball_y < paddle_y_1p + paddle_height)) {
             ball_x_spd *= -1;
+
+            var delta_y = ball_y - (paddle_y_1p + paddle_height/2);
+            ball_y_spd = delta_y * 0.35;
         }
         else {
-            score_2p += 1;
+            score_2p++;
             reset_ball();
         }
     }
