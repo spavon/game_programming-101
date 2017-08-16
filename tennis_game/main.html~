@@ -24,8 +24,8 @@ window.onload = function() {
 
     canvas.addEventListener('mousemove', function(evt) {
         var mouse_pos = get_mouse_position(evt);
-        //paddle_y_2p = mouse_pos.y - (paddle_height/2);
-        paddle_y_1p = mouse_pos.y - (paddle_height/2);
+        paddle_y_2p = mouse_pos.y - (paddle_height/2);
+        //paddle_y_1p = mouse_pos.y - (paddle_height/2);
     } );
 
     var fps = 30
