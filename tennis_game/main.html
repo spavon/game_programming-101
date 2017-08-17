@@ -11,7 +11,7 @@ var ball_x = 100, ball_y = 100;
 var ball_x_spd = 6, ball_y_spd = 6;
 var canvas, canvas_context;
 var paddle_y_1p = 250, paddle_y_2p = 250;
-const paddle_height = 100, paddle_width = 10, paddle_margin = 5;
+const paddle_height = 100, paddle_width = 10, paddle_margin = 5, paddle_ai_spd = 6;
 const score_height = 50;
 var score_1p = 0, score_2p = 0;
 
@@ -80,6 +80,7 @@ function reset_ball() {
 }
 
 function move_ball() {
+    paddle_ai()
     if(ball_x > canvas.width) {
         if((ball_y > paddle_y_2p) && (ball_y < paddle_y_2p + paddle_height)) {
             ball_x_spd *= -1;
@@ -116,6 +117,16 @@ function move_ball() {
 
     ball_x += ball_x_spd;
     ball_y += ball_y_spd;
+}
+
+function paddle_ai() {
+    if (ball_y > (paddle_y_2p + (paddle_height/2))) {
+        paddle_y_2p += paddle_ai_spd;
+    }
+
+    if (ball_y < (paddle_y_2p + (paddle_height/2))) {
+        paddle_y_2p -= paddle_ai_spd;
+    }
 }
 
 </script>
