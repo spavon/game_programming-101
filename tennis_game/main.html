@@ -11,14 +11,18 @@ var ball_x = 100, ball_y = 100;
 var ball_x_spd = 6, ball_y_spd = 6;
 var canvas, canvas_context;
 var paddle_y_1p = 250, paddle_y_2p = 250;
-const paddle_height = 100, paddle_width = 10, paddle_margin = 5;
-const score_height = 50;
+const paddle_height = 100, paddle_width = 10, paddle_margin = 5, paddle_ai_spd = 6;
+const score_height = 50, score_to_win = 3;
 var score_1p = 0, score_2p = 0;
+var gameover = false;
+const score_font = "30px Arial", score_font_color = "white";
 
 window.onload = function() {
     // Get canvas size from HTML tag
     canvas = document.getElementById('game_canvas');
     canvas_context = canvas.getContext('2d');
+
+    canvas.addEventListener('mousedown', handle_mouse_click);
 
     canvas.addEventListener('mousemove', function(evt) {
         var mouse_pos = get_mouse_position(evt);
@@ -38,15 +42,23 @@ function draw_this() {
     draw_box(0, 0, canvas.width, canvas.height, 'black');
     draw_box(paddle_margin, paddle_y_1p, paddle_width, paddle_height, 'white');
     draw_box((canvas.width - (paddle_margin + paddle_width)), paddle_y_2p, paddle_width, paddle_height, 'white');
+
+    for (var i=0; i < canvas.height; i += 40) {
+        draw_box(canvas.width/2 - 1, i, 2, 20, "white");
+    }
+
     draw_circle(ball_x, ball_y, 10, 'red');
 
-    draw_score(canvas.width/4, score_height, score_1p, "white");
-    draw_score(canvas.width*3/4, score_height, score_2p, "white");
+    draw_score(canvas.width/4, score_height, score_1p, score_font_color, score_font);
+    draw_score(canvas.width*3/4, score_height, score_2p, score_font_color, score_font);
+
+    check_for_winner(score_1p, "Player 1 WINS");
+    check_for_winner(score_2p, "Player 2 WINS");
 }
 
-function draw_score(x, y, score, color) {
+function draw_score(x, y, score, color, font) {
     canvas_context.fillStyle = color;
-    canvas_context.font = "16px Arial";
+    canvas_context.font = font;
     canvas_context.textAlign = "center";
     canvas_context.fillText(score, x, y);
 }
@@ -61,6 +73,14 @@ function get_mouse_position(evt) {
     };
 }
 
+function handle_mouse_click(evt) {
+    if (gameover) {
+        score_1p = 0;
+        score_2p = 0;
+        gameover = false;
+    }
+}
+
 function draw_circle(x, y, radius, color) {
     canvas_context.fillStyle = color; // Set fill color
     canvas_context.beginPath(); // Declares this as a new, separate object
@@ -73,6 +93,17 @@ function draw_box(x, y, width, height, color) {
     canvas_context.fillRect(x, y, width, height); // Set canvas position and size (x, y, w, h)
 }
 
+function check_for_winner(player_score, winner_text) {
+    if (player_score >= score_to_win) {
+        gameover = true;
+        draw_box(0, 0, canvas.width, canvas.height, 'black');
+        draw_score(canvas.width/2, canvas.height/2, winner_text, score_font_color, "50px Arial")
+        draw_score(canvas.width/4, score_height, score_1p, score_font_color, score_font);
+        draw_score(canvas.width*3/4, score_height, score_2p, score_font_color, score_font);
+        draw_score(canvas.width/2, canvas.height - 25, "Click to play again", score_font_color, "20px Arial");
+    }
+}
+
 function reset_ball() {
     ball_y = canvas.height/2;
     ball_x = canvas.width/2;
@@ -80,6 +111,8 @@ function reset_ball() {
 }
 
 function move_ball() {
+    if (gameover) { return }
+    paddle_ai()
     if(ball_x > canvas.width) {
         if((ball_y > paddle_y_2p) && (ball_y < paddle_y_2p + paddle_height)) {
             ball_x_spd *= -1;
@@ -116,6 +149,16 @@ function move_ball() {
 
     ball_x += ball_x_spd;
     ball_y += ball_y_spd;
+}
+
+function paddle_ai() {
+    if ((ball_y + 35) > (paddle_y_2p + (paddle_height/2))) {
+        paddle_y_2p += paddle_ai_spd;
+    }
+
+    if ((ball_y + 35) < (paddle_y_2p + (paddle_height/2))) {
+        paddle_y_2p -= paddle_ai_spd;
+    }
 }
 
 </script>
