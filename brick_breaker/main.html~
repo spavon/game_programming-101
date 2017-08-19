@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<meta content="utf-8" http-equiv="encoding">
+</head>
+<body>
+<canvas id="game_canvas" width="800" height="600"></canvas>
+<script>
+var ball_x = 100, ball_y = 100;
+var ball_x_spd = 6, ball_y_spd = 6;
+var canvas, canvas_context;
+var paddle_x = 250;
+const paddle_height = 10, paddle_width = 100, paddle_margin = 40;
+var score = 0;
+var gameover = false;
+const score_font = "30px Arial", score_font_color = "white", score_height = 100;
+
+window.onload = function() {
+    // Get canvas size from HTML tag
+    canvas = document.getElementById('game_canvas');
+    canvas_context = canvas.getContext('2d');
+
+    canvas.addEventListener('mousedown', handle_mouse_click);
+
+    canvas.addEventListener('mousemove', function(evt) {
+        var mouse_pos = get_mouse_position(evt);
+        paddle_x = mouse_pos.x - (paddle_width/2);
+    } );
+
+    var fps = 30
+    setInterval(function() {
+        move_ball();
+        draw_this();
+    }, 1000/fps);
+
+}
+
+function draw_this() {
+    draw_box(0, 0, canvas.width, canvas.height, 'black');
+    draw_box(paddle_x, (canvas.height - (paddle_margin + paddle_height)), paddle_width, paddle_height, 'white');
+
+    draw_circle(ball_x, ball_y, 10, 'red');
+
+    draw_score(canvas.width/2, score_height, score, score_font_color, score_font);
+}
+
+function draw_score(x, y, score, color, font) {
+    canvas_context.fillStyle = color;
+    canvas_context.font = font;
+    canvas_context.textAlign = "center";
+    canvas_context.fillText(score, x, y);
+}
+
+function get_mouse_position(evt) {
+    var rect = canvas.getBoundingClientRect(), root = document.documentElement;
+    var mouse_x = evt.clientX - rect.left - root.scrollLeft;
+    var mouse_y = evt.clientY - rect.top - root.scrollTop;
+    return {
+        x: mouse_x,
+        y: mouse_y
+    };
+}
+
+function handle_mouse_click(evt) {
+    if (gameover) {
+        score = 0;
+        gameover = false;
+    }
+}
+
+function draw_circle(x, y, radius, color) {
+    canvas_context.fillStyle = color; // Set fill color
+    canvas_context.beginPath(); // Declares this as a new, separate object
+    canvas_context.arc(x, y, 10, 0, Math.PI*2, true); // (x, y, radius, start_angle, end_angle, draw_anticlockwise=True)
+    canvas_context.fill(); // Color the shape with the current fillStyle
+}
+
+function draw_box(x, y, width, height, color) {
+    canvas_context.fillStyle = color; // Set fill color
+    canvas_context.fillRect(x, y, width, height); // Set canvas position and size (x, y, w, h)
+}
+
+function reset_ball() {
+    ball_y = canvas.height/2;
+    ball_x = canvas.width/2;
+    ball_x_spd *= -1;
+}
+
+function move_ball() {
+    if (gameover) { return }
+    if(ball_x > canvas.width) {
+        ball_x_spd *= -1;
+    }
+
+    if(ball_x < 0) {
+        ball_x_spd *= -1;
+    }
+
+    if(ball_y < 0) {
+        ball_y_spd *= -1;
+    }
+
+    if(ball_y > canvas.height) {
+        reset_ball();
+    }
+    if(ball_y_spd > 0) {
+        if(ball_y > (canvas.height - (paddle_height + paddle_margin))) {
+            console.log((canvas.height - (paddle_height + paddle_margin)))
+            if((ball_x > paddle_x) && (ball_x < paddle_x + paddle_width)) {
+                ball_y_spd *= -1;
+
+                var delta_x = ball_x - (paddle_x + paddle_width/2);
+                ball_x_spd = delta_x * 0.35;
+            }
+        }
+    }
+
+    ball_x += ball_x_spd;
+    ball_y += ball_y_spd;
+}
+
+</script>
+</body>
+</html>
