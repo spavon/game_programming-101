@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<meta content="utf-8" http-equiv="encoding">
+</head>
+<body>
+<canvas id="game_canvas" width="800" height="600"></canvas>
+<script>
+var ball_x = 100, ball_y = 100;
+var ball_x_spd = 6, ball_y_spd = 6;
+var canvas, canvas_context;
+var paddle_x = 250;
+const paddle_height = 10, paddle_width = 100, paddle_margin = 40, paddle_y = 540;
+var score = 0;
+var gameover = false;
+const score_font = "30px Arial", score_font_color = "white", score_height = 100;
+const brick_w = 80, brick_h = 20, brick_gap = 2, brick_cols = 10, brick_rows = 14;
+var brick_grid = new Array(brick_cols * brick_rows);
+
+window.onload = function() {
+    // Get canvas size from HTML tag
+    canvas = document.getElementById('game_canvas');
+    canvas_context = canvas.getContext('2d');
+
+    canvas.addEventListener('mousedown', handle_mouse_click);
+
+    canvas.addEventListener('mousemove', function(evt) {
+        var mouse_pos = get_mouse_position(evt);
+        paddle_x = mouse_pos.x - (paddle_width/2);
+    } );
+
+    reset_bricks();
+
+    var fps = 30
+    setInterval(function() {
+        move_ball();
+        draw_this();
+    }, 1000/fps);
+}
+
+function draw_this() {
+    draw_box(0, 0, canvas.width, canvas.height, 'black');
+    //draw_box(paddle_x, (canvas.height - (paddle_margin + paddle_height)), paddle_width, paddle_height, 'white');
+    draw_box(paddle_x, paddle_y, paddle_width, paddle_height, 'white');
+
+    draw_bricks();
+
+    draw_circle(ball_x, ball_y, 10, 'red');
+
+    draw_score(canvas.width/2, score_height, score, score_font_color, score_font);
+}
+
+function draw_score(x, y, score, color, font) {
+    canvas_context.fillStyle = color;
+    canvas_context.font = font;
+    canvas_context.textAlign = "center";
+    canvas_context.fillText(score, x, y);
+}
+
+function get_mouse_position(evt) {
+    var rect = canvas.getBoundingClientRect(), root = document.documentElement;
+    var mouse_x = evt.clientX - rect.left - root.scrollLeft;
+    var mouse_y = evt.clientY - rect.top - root.scrollTop;
+    return {
+        x: mouse_x,
+        y: mouse_y
+    };
+}
+
+function handle_mouse_click(evt) {
+    if (gameover) {
+        score = 0;
+        gameover = false;
+    }
+}
+
+function draw_circle(x, y, radius, color) {
+    canvas_context.fillStyle = color; // Set fill color
+    canvas_context.beginPath(); // Declares this as a new, separate object
+    canvas_context.arc(x, y, 10, 0, Math.PI*2, true); // (x, y, radius, start_angle, end_angle, draw_anticlockwise=True)
+    canvas_context.fill(); // Color the shape with the current fillStyle
+}
+
+function draw_box(x, y, width, height, color) {
+    canvas_context.fillStyle = color; // Set fill color
+    canvas_context.fillRect(x, y, width, height); // Set canvas position and size (x, y, w, h)
+}
+
+function draw_bricks() {
+    for(var col = 0; col < brick_cols; col++) {
+        for(var row = 0; row < brick_rows; row++) {
+            if( brick_exists(col, row) ) {
+                var brick_x = col * brick_w;
+                var brick_y = row * brick_h;
+
+                draw_box(brick_x, brick_y, (brick_w - brick_gap), (brick_h - brick_gap), 'blue');
+            }
+        }
+    }
+}
+
+function reset_bricks() {
+    for(var i = 0; i < (brick_cols * brick_rows); i++) {
+        brick_grid[i] = true;
+        //if(Math.random() < 0.5) {
+        //    brick_grid[i] = true;
+        //}
+        //else {
+        //    brick_grid[i] = false;
+        //}
+    }
+}
+
+function remove_brick(b_x, b_y) {
+    var br_col = Math.floor(b_x / brick_w);
+    var br_row = Math.floor(b_y / brick_h);
+
+    if (br_col < 0 || br_col >= brick_cols ||
+        br_row < 0 || br_row >= brick_rows) {
+        return;
+    }
+
+    var brick_index = brick_tile_to_index(br_col, br_row);
+    brick_grid[brick_index] = false;
+}
+
+function brick_tile_to_index(col, row) {
+    return (col + (brick_cols * row));
+}
+
+function brick_exists(col, row) {
+    var brick_index = brick_tile_to_index(col, row);
+    return (brick_grid[brick_index] == true);
+}
+
+function reset_ball() {
+    ball_y = canvas.height/2;
+    ball_x = canvas.width/2;
+    ball_x_spd *= -1;
+}
+
+function move_ball() {
+    if (gameover) { return }
+    if(ball_x > canvas.width) {
+        ball_x_spd *= -1;
+    }
+
+    if(ball_x < 0) {
+        ball_x_spd *= -1;
+    }
+
+    if(ball_y < 0) {
+        ball_y_spd *= -1;
+    }
+
+    if(ball_y > canvas.height) {
+        reset_ball();
+    }
+    if(ball_y_spd > 0) {
+        if((ball_y >= paddle_y) && (ball_y <= (paddle_y + paddle_height))) {
+            if((ball_x > paddle_x) && (ball_x < paddle_x + paddle_width)) {
+                ball_y_spd *= -1;
+
+                var delta_x = ball_x - (paddle_x + paddle_width/2);
+                ball_x_spd = delta_x * 0.35;
+            }
+        }
+    }
+
+    remove_brick(ball_x, ball_y);
+    ball_x += ball_x_spd;
+    ball_y += ball_y_spd;
+}
+
+</script>
+</body>
+</html>
