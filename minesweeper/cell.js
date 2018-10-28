@@ -9,6 +9,7 @@ class Cell {
         this.bee = false;
         this.revealed = false;
         this.flagged = false;
+        this.falseFlag = false;
     }
 
     show() {
@@ -16,7 +17,7 @@ class Cell {
         noFill();
     	let half_w = this.w/2;
     	rect(this.x, this.y, this.w, this.w);
-    	if (this.revealed) {
+        if (this.revealed) {
     		if (this.bee) {
     			fill(127);
     			ellipse(this.x + half_w, this.y + half_w, half_w);
@@ -29,11 +30,17 @@ class Cell {
     				text(this.neighborCount, this.x + half_w, this.y + this.w * 0.75);
     			}
     		}
-    	} else if (!this.revealed && this.flagged) {
-    	    textAlign(CENTER);
-    	    fill(0);
-    		text("X", this.x + half_w, this.y + this.w * 0.75);
-    	}
+        } else if (!this.revealed && this.flagged) {
+            if (activeGame.gameOver_status && this.falseFlag) {
+                textAlign(CENTER);
+                fill(0);
+                text("O", this.x + half_w, this.y + this.w * 0.75);
+            } else {
+                textAlign(CENTER);
+                fill(0);
+                text("X", this.x + half_w, this.y + this.w * 0.75);
+            }
+        }
     }
 
     countBees() {
@@ -75,7 +82,7 @@ class Cell {
     			var j = this.j + yoff;
     			if (i > -1 && i < activeGame.cols && j > -1 && j < activeGame.rows) {
     				var neighbor = activeGame.grid[i][j];
-    			  if (!neighbor.bee && !neighbor.revealed) {
+    			  if (!neighbor.bee && !neighbor.revealed && !neighbor.flagged) {
     				  neighbor.reveal();
     			  }
     			}
@@ -84,12 +91,17 @@ class Cell {
     }
 
     toggleFlag() {
-        if (!this.flagged) {
+        if (!this.flagged && (activeGame.totalFlags > 0)) {
             this.flagged = true;
             activeGame.totalFlags--;
-        } else {
+        } else if (this.flagged && (activeGame.totalFlags < activeGame.totalBees)) {
             this.flagged = false;
             activeGame.totalFlags++;
+        }
+        if (this.flagged && !this.bee) {
+            this.falseFlag = true;
+        } else {
+            this.falseFlag = false;
         }
     }
 }

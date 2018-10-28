@@ -4,7 +4,8 @@ class Game {
         this.cols = floor(width / this.w);
         this.rows = floor(height / this.w);
         this.grid = this.make2DArray();
-        this.totalBees = 20;
+        this.totalBees = 10;
+        this.totalFlags = this.totalBees;
         this.gameOver_status = false;
     }
 
@@ -20,7 +21,9 @@ class Game {
         this.gameOver_status = true;
         for (var i = 0; i < this.cols; i++) {
             for (var j = 0; j < this.rows; j++) {
-                this.grid[i][j].revealed = true;
+                if (!this.grid[i][j].falseFlag) {
+                    this.grid[i][j].revealed = true;
+                }
             }
         }
     }
