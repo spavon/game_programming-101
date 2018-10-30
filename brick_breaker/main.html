@@ -102,7 +102,7 @@ function draw_bricks() {
                 var brick_y = row * brick_h;
 
                 if(row < 3){
-                    check_for_and_remove_brick(brick_x, brick_y);
+                    check_for_and_remove_brick(brick_x, brick_y, false);
                 } else {
                     draw_box(brick_x, brick_y, (brick_w - brick_gap), (brick_h - brick_gap), 'blue');
                 }
@@ -123,7 +123,7 @@ function reset_bricks() {
     }
 }
 
-function check_for_and_remove_brick(b_x, b_y) {
+function check_for_and_remove_brick(b_x, b_y, score_it=true) {
     var br_col = Math.floor(b_x / brick_w);
     var br_row = Math.floor(b_y / brick_h);
 
@@ -162,7 +162,7 @@ function check_for_and_remove_brick(b_x, b_y) {
         }
 
         brick_grid[brick_index] = false;
-        score++;
+        if(score_it){ score++; };
         return true;
     }
 }
@@ -233,13 +233,14 @@ function check_gameover() {
             break;
         }else if(!brick_grid[i]){
             gameover = true;
-            score = 0;
+            console.log("Gameover set!");
         }
     }
 
     if(gameover){
         reset_bricks();
         reset_ball();
+        score = 0;
     }
 }
 
