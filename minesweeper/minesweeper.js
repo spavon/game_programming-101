@@ -37,10 +37,10 @@ function setup() {
 }
 
 function draw() {
-  background(255);
+    background(255);
         for (var i = 0; i < activeGame.cols; i++) {
-        for (var j = 0; j < activeGame.rows; j++) {
-            activeGame.grid[i][j].show();
+            for (var j = 0; j < activeGame.rows; j++) {
+                activeGame.grid[i][j].show();
         }
     }
 }

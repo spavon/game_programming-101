@@ -7,7 +7,7 @@
 <body>
 <canvas id="game_canvas" width="800" height="600"></canvas>
 <script>
-var ball_x = 100, ball_y = 100;
+var ball_x = 300, ball_y = 350;
 var ball_x_spd = 6, ball_y_spd = 6;
 var canvas, canvas_context;
 var paddle_x = 250;
@@ -16,6 +16,7 @@ var score = 0;
 var gameover = false;
 const score_font = "30px Arial", score_font_color = "white", score_height = 100;
 const brick_w = 80, brick_h = 20, brick_gap = 2, brick_cols = 10, brick_rows = 14;
+//const brick_w = 800, brick_h = 100, brick_gap = 2, brick_cols = 1, brick_rows = 2;
 var brick_grid = new Array(brick_cols * brick_rows);
 
 window.onload = function() {
@@ -28,12 +29,12 @@ window.onload = function() {
     canvas.addEventListener('mousemove', function(evt) {
         var mouse_pos = get_mouse_position(evt);
         paddle_x = mouse_pos.x - (paddle_width/2);
-    } );
+    });
 
     reset_bricks();
 
     var fps = 30
-    setInterval(function() {
+    setInterval(function(){
         move_ball();
         draw_this();
     }, 1000/fps);
@@ -62,6 +63,11 @@ function get_mouse_position(evt) {
     var rect = canvas.getBoundingClientRect(), root = document.documentElement;
     var mouse_x = evt.clientX - rect.left - root.scrollLeft;
     var mouse_y = evt.clientY - rect.top - root.scrollTop;
+
+    // Moves ball to mouse for debugging
+    //ball_x = mouse_x;
+    //ball_y = mouse_y;
+
     return {
         x: mouse_x,
         y: mouse_y
@@ -91,10 +97,15 @@ function draw_bricks() {
     for(var col = 0; col < brick_cols; col++) {
         for(var row = 0; row < brick_rows; row++) {
             if( brick_exists(col, row) ) {
+
                 var brick_x = col * brick_w;
                 var brick_y = row * brick_h;
 
-                draw_box(brick_x, brick_y, (brick_w - brick_gap), (brick_h - brick_gap), 'blue');
+                if(row < 3){
+                    check_for_and_remove_brick(brick_x, brick_y, false);
+                } else {
+                    draw_box(brick_x, brick_y, (brick_w - brick_gap), (brick_h - brick_gap), 'blue');
+                }
             }
         }
     }
@@ -112,17 +123,48 @@ function reset_bricks() {
     }
 }
 
-function remove_brick(b_x, b_y) {
+function check_for_and_remove_brick(b_x, b_y, score_it=true) {
     var br_col = Math.floor(b_x / brick_w);
     var br_row = Math.floor(b_y / brick_h);
 
     if (br_col < 0 || br_col >= brick_cols ||
         br_row < 0 || br_row >= brick_rows) {
-        return;
+        return false;
     }
 
     var brick_index = brick_tile_to_index(br_col, br_row);
-    brick_grid[brick_index] = false;
+
+    if(brick_grid[brick_index] == true){
+        var prev_ball_row = Math.floor((b_x - ball_x_spd) / brick_w);
+        var prev_ball_col = Math.floor((b_y - ball_y_spd) / brick_h);
+
+        var both_tests_failed = true;
+        
+        if(prev_ball_col != br_col){
+            var adjacent_brick = brick_tile_to_index(prev_ball_col, br_row);
+            if(brick_grid[adjacent_brick]){
+                bounce_ball("x");
+                both_tests_failed = false;
+            }
+        }
+
+        if(prev_ball_row != br_row){
+            var adjacent_brick = brick_tile_to_index(br_row, prev_ball_row);
+            if(brick_grid[adjacent_brick]){
+                bounce_ball("y");
+                both_tests_failed = false;
+            }
+        }
+
+        if(both_tests_failed){
+            bounce_ball("x");
+            bounce_ball("y");
+        }
+
+        brick_grid[brick_index] = false;
+        if(score_it){ score++; };
+        return true;
+    }
 }
 
 function brick_tile_to_index(col, row) {
@@ -137,41 +179,71 @@ function brick_exists(col, row) {
 function reset_ball() {
     ball_y = canvas.height/2;
     ball_x = canvas.width/2;
-    ball_x_spd *= -1;
+    bounce_ball("x");
+}
+
+function bounce_ball(dir) {
+    if(dir == "x"){
+        ball_x_spd *= -1;
+    }else if(dir == "y"){
+        ball_y_spd *= -1;
+    }
 }
 
 function move_ball() {
     if (gameover) { return }
     if(ball_x > canvas.width) {
-        ball_x_spd *= -1;
+        bounce_ball("x");
     }
 
     if(ball_x < 0) {
-        ball_x_spd *= -1;
+        bounce_ball("x");
     }
 
     if(ball_y < 0) {
-        ball_y_spd *= -1;
+        bounce_ball("y");
     }
 
     if(ball_y > canvas.height) {
         reset_ball();
     }
+
     if(ball_y_spd > 0) {
         if((ball_y >= paddle_y) && (ball_y <= (paddle_y + paddle_height))) {
             if((ball_x > paddle_x) && (ball_x < paddle_x + paddle_width)) {
-                ball_y_spd *= -1;
+                bounce_ball("y");
 
                 var delta_x = ball_x - (paddle_x + paddle_width/2);
                 ball_x_spd = delta_x * 0.35;
+                check_gameover();
             }
         }
     }
 
-    remove_brick(ball_x, ball_y);
+    check_for_and_remove_brick(ball_x, ball_y);
+
     ball_x += ball_x_spd;
     ball_y += ball_y_spd;
 }
+
+function check_gameover() {
+    for(var i = 0; i < (brick_cols * brick_rows); i++) {
+        if(brick_grid[i]){
+            gameover = false;
+            break;
+        }else if(!brick_grid[i]){
+            gameover = true;
+            console.log("Gameover set!");
+        }
+    }
+
+    if(gameover){
+        reset_bricks();
+        reset_ball();
+        score = 0;
+    }
+}
+
 
 </script>
 </body>
