@@ -7,17 +7,37 @@
 <body>
 <canvas id="game_canvas" width="800" height="600"></canvas>
 <script>
-var ball_x = 300, ball_y = 350;
-var ball_x_spd = 6, ball_y_spd = 6;
+var car_x = 75, car_y = 75;
+var car_x_spd = 6, car_y_spd = 8;
 var canvas, canvas_context;
-var paddle_x = 250;
-const paddle_height = 10, paddle_width = 100, paddle_margin = 40, paddle_y = 540;
 var score = 0;
 var gameover = false;
 const score_font = "30px Arial", score_font_color = "white", score_height = 100;
-const track_w = 80, track_h = 20, track_gap = 2, track_cols = 10, track_rows = 14;
-//const track_w = 800, track_h = 100, track_gap = 2, track_cols = 1, track_rows = 2;
-var track_grid = new Array(track_cols * track_rows);
+
+const track_w = 40,
+      track_h = 40,
+      track_gap = 1,
+      track_cols = 20,
+      track_rows = 15;
+
+//var track_grid = new Array(track_cols * track_rows);
+var track_grid = [
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,
+    1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+    1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1,
+    1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1,
+    1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1,
+    1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1,
+    1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1,
+    1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+    1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+    1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+    1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1,
+    1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1,
+    1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+    ];
 
 window.onload = function() {
     // Get canvas size from HTML tag
@@ -26,28 +46,21 @@ window.onload = function() {
 
     canvas.addEventListener('mousedown', handle_mouse_click);
 
-    canvas.addEventListener('mousemove', function(evt) {
-        var mouse_pos = get_mouse_position(evt);
-        paddle_x = mouse_pos.x - (paddle_width/2);
-    });
-
-    reset_tracks();
-
-    var fps = 30
+    var fps = 30;
     setInterval(function(){
-        move_ball();
+        move_car();
         draw_this();
     }, 1000/fps);
+
+    reset_car();
 }
 
 function draw_this() {
     draw_box(0, 0, canvas.width, canvas.height, 'black');
-    //draw_box(paddle_x, (canvas.height - (paddle_margin + paddle_height)), paddle_width, paddle_height, 'white');
-    draw_box(paddle_x, paddle_y, paddle_width, paddle_height, 'white');
 
     draw_tracks();
 
-    draw_circle(ball_x, ball_y, 10, 'red');
+    draw_circle(car_x, car_y, 10, 'red');
 
     draw_score(canvas.width/2, score_height, score, score_font_color, score_font);
 }
@@ -59,32 +72,19 @@ function draw_score(x, y, score, color, font) {
     canvas_context.fillText(score, x, y);
 }
 
-function get_mouse_position(evt) {
-    var rect = canvas.getBoundingClientRect(), root = document.documentElement;
-    var mouse_x = evt.clientX - rect.left - root.scrollLeft;
-    var mouse_y = evt.clientY - rect.top - root.scrollTop;
-
-    // Moves ball to mouse for debugging
-    //ball_x = mouse_x;
-    //ball_y = mouse_y;
-
-    return {
-        x: mouse_x,
-        y: mouse_y
-    };
-}
-
 function handle_mouse_click(evt) {
     if (gameover) {
         score = 0;
         gameover = false;
     }
+    move_car();
+    draw_this();
 }
 
 function draw_circle(x, y, radius, color) {
     canvas_context.fillStyle = color; // Set fill color
     canvas_context.beginPath(); // Declares this as a new, separate object
-    canvas_context.arc(x, y, 10, 0, Math.PI*2, true); // (x, y, radius, start_angle, end_angle, draw_anticlockwise=True)
+    canvas_context.arc(x, y, radius, 0, Math.PI*2, true); // (x, y, radius, start_angle, end_angle, draw_anticlockwise=True)
     canvas_context.fill(); // Color the shape with the current fillStyle
 }
 
@@ -101,8 +101,8 @@ function draw_tracks() {
                 var track_x = col * track_w;
                 var track_y = row * track_h;
 
-                if(row < 3){
-                    check_for_and_remove_track(track_x, track_y, false);
+                if(row < 0){
+                    check_for_and_bounce_track(track_x, track_y, false);
                 } else {
                     draw_box(track_x, track_y, (track_w - track_gap), (track_h - track_gap), 'blue');
                 }
@@ -111,119 +111,87 @@ function draw_tracks() {
     }
 }
 
-function reset_tracks() {
-    for(var i = 0; i < (track_cols * track_rows); i++) {
-        track_grid[i] = true;
-        //if(Math.random() < 0.5) {
-        //    track_grid[i] = true;
-        //}
-        //else {
-        //    track_grid[i] = false;
-        //}
-    }
-}
+function bounce_off_track_at_pixel_coord(pixel_x, pixel_y) {
+    var tile_col = Math.floor(pixel_x / track_w);
+    var tile_row = Math.floor(pixel_y / track_h);
 
-function check_for_and_remove_track(b_x, b_y, score_it=true) {
-    var br_col = Math.floor(b_x / track_w);
-    var br_row = Math.floor(b_y / track_h);
+    console.log(tile_col, tile_row);
 
-    if (br_col < 0 || br_col >= track_cols ||
-        br_row < 0 || br_row >= track_rows) {
+    if (tile_col < 0 || tile_col >= track_cols ||
+        tile_row < 0 || tile_row >= track_rows) {
         return false;
     }
 
-    var track_index = track_tile_to_index(br_col, br_row);
+    var track_index = track_tile_to_index(tile_col, tile_row);
 
-    if(track_grid[track_index] == true){
-        var prev_ball_row = Math.floor((b_x - ball_x_spd) / track_w);
-        var prev_ball_col = Math.floor((b_y - ball_y_spd) / track_h);
+    console.log("track index:", track_index);
+
+    if(track_grid[track_index] == 1) {
+        var prev_tile_col = Math.floor((car_x - car_x_spd) / track_w);
+        var prev_tile_row = Math.floor((car_y - car_y_spd) / track_h);
 
         var both_tests_failed = true;
         
-        if(prev_ball_col != br_col){
-            var adjacent_track = track_tile_to_index(prev_ball_col, br_row);
-            if(track_grid[adjacent_track]){
-                bounce_ball("x");
+        if(prev_tile_col != tile_col){
+            var adjacent_track = track_tile_to_index(prev_tile_col, tile_row);
+            console.log("adj_COL:", adjacent_track, "grid:", track_grid[adjacent_track]);
+            if(track_grid[adjacent_track] != 1){
+                car_x_spd *= -1;
                 both_tests_failed = false;
             }
         }
 
-        if(prev_ball_row != br_row){
-            var adjacent_track = track_tile_to_index(br_row, prev_ball_row);
-            if(track_grid[adjacent_track]){
-                bounce_ball("y");
+        if(prev_tile_row != tile_row){
+            var adjacent_track = track_tile_to_index(tile_col, prev_tile_row);
+            console.log("adj_ROW:", adjacent_track, "grid:", track_grid[adjacent_track]);
+            if(track_grid[adjacent_track] != 1){
+                car_y_spd *= -1;
                 both_tests_failed = false;
             }
         }
 
         if(both_tests_failed){
-            bounce_ball("x");
-            bounce_ball("y");
-        }
-
-        track_grid[track_index] = false;
-        if(score_it){ score++; };
-        return true;
-    }
-}
-
-function track_tile_to_index(col, row) {
-    return (col + (track_cols * row));
-}
-
-function track_exists(col, row) {
-    var track_index = track_tile_to_index(col, row);
-    return (track_grid[track_index] == true);
-}
-
-function reset_ball() {
-    ball_y = canvas.height/2;
-    ball_x = canvas.width/2;
-    bounce_ball("x");
-}
-
-function bounce_ball(dir) {
-    if(dir == "x"){
-        ball_x_spd *= -1;
-    }else if(dir == "y"){
-        ball_y_spd *= -1;
-    }
-}
-
-function move_ball() {
-    if (gameover) { return }
-    if(ball_x > canvas.width) {
-        bounce_ball("x");
-    }
-
-    if(ball_x < 0) {
-        bounce_ball("x");
-    }
-
-    if(ball_y < 0) {
-        bounce_ball("y");
-    }
-
-    if(ball_y > canvas.height) {
-        reset_ball();
-    }
-
-    if(ball_y_spd > 0) {
-        if((ball_y >= paddle_y) && (ball_y <= (paddle_y + paddle_height))) {
-            if((ball_x > paddle_x) && (ball_x < paddle_x + paddle_width)) {
-                bounce_ball("y");
-
-                var delta_x = ball_x - (paddle_x + paddle_width/2);
-                ball_x_spd = delta_x * 0.35;
-                check_gameover();
-            }
+            car_x_spd *= -1;
+            car_y_spd *= -1;
         }
     }
+}
 
-    check_for_and_remove_track(ball_x, ball_y);
+function track_tile_to_index(tile_col, tile_row) {
+    return (tile_col + (track_cols * tile_row));
+}
 
-    ball_x += ball_x_spd;
-    ball_y += ball_y_spd;
+function track_exists(track_tile_col, track_tile_row) {
+    var track_index = track_tile_to_index(track_tile_col, track_tile_row);
+    return (track_grid[track_index] == 1);
+}
+
+function reset_car() {
+    car_x = canvas.width/2 + 50;
+    car_y = canvas.height/2;
+}
+
+function move_car() {
+    if(car_x < 0) {
+        car_x_spd *= -1;
+    }
+
+    if(car_x > canvas.width) {
+        car_x_spd *= -1;
+    }
+
+    if(car_y < 0) {
+        car_y_spd *= -1;
+    }
+
+    if(car_y > canvas.height) {
+        reset_car();
+    }
+
+    bounce_off_track_at_pixel_coord(car_x, car_y);
+
+    car_x += car_x_spd;
+    car_y += car_y_spd;
 }
 
 function check_gameover() {
@@ -239,7 +207,7 @@ function check_gameover() {
 
     if(gameover){
         reset_tracks();
-        reset_ball();
+        reset_car();
         score = 0;
     }
 }
